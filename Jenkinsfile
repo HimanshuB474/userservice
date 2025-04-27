@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     environment {
-        JAVA_HOME = tool 'JDK-17'
+        JAVA_HOME = tool 'JDK-17' // make sure you have this tool configured in Jenkins
     }
 
     stages {
         stage('Set Gradle User Home') {
             steps {
                 script {
-                    env.GRADLE_USER_HOME = "${env.WORKSPACE}\\gradle_home".replaceAll(/[\\/]+$/, '')
+                    env.GRADLE_USER_HOME = "${env.WORKSPACE}/gradle_home".replaceAll(/[\\/]+$/, '')
                 }
             }
         }
@@ -26,12 +26,14 @@ pipeline {
                     if (isUnix()) {
                         sh '''
                             chmod +x gradlew
-                            mkdir -p gradle_home
+                            mkdir -p gradle_home/wrapper/dists
                             chmod -R 777 gradle_home
                         '''
                     } else {
                         bat '''
                             mkdir gradle_home 2>nul
+                            mkdir gradle_home\\wrapper 2>nul
+                            mkdir gradle_home\\wrapper\\dists 2>nul
                             icacls gradle_home /grant Everyone:(OI)(CI)F /T
                             icacls gradlew.bat /grant Everyone:F
                         '''
@@ -43,10 +45,15 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    if (isUnix()) {
-                        sh './gradlew clean build --no-daemon --gradle-user-home=${GRADLE_USER_HOME} --info'
-                    } else {
-                        bat "gradlew.bat clean build --no-daemon --gradle-user-home=\"%GRADLE_USER_HOME:\\=\\\\%\" --info"
+                    try {
+                        if (isUnix()) {
+                            sh './gradlew clean build --no-daemon --gradle-user-home=${GRADLE_USER_HOME} --info'
+                        } else {
+                            bat 'gradlew.bat clean build --no-daemon --gradle-user-home=%GRADLE_USER_HOME% --info'
+                        }
+                    } catch (Exception e) {
+                        currentBuild.result = 'FAILURE'
+                        error("Build failed: ${e.message}")
                     }
                 }
             }
@@ -55,10 +62,15 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    if (isUnix()) {
-                        sh './gradlew test --no-daemon --gradle-user-home=${GRADLE_USER_HOME} --info'
-                    } else {
-                        bat "gradlew.bat test --no-daemon --gradle-user-home=\"%GRADLE_USER_HOME:\\=\\\\%\" --info"
+                    try {
+                        if (isUnix()) {
+                            sh './gradlew test --no-daemon --gradle-user-home=${GRADLE_USER_HOME} --info'
+                        } else {
+                            bat 'gradlew.bat test --no-daemon --gradle-user-home=%GRADLE_USER_HOME% --info'
+                        }
+                    } catch (Exception e) {
+                        currentBuild.result = 'FAILURE'
+                        error("Tests failed: ${e.message}")
                     }
                 }
             }
@@ -67,7 +79,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying the build...'
-                // Add your deployment steps here
+                // Add your deployment logic here
             }
         }
     }
