@@ -2,8 +2,9 @@ pipeline {
     agent any
     
     environment {
-        // Define environment variables, if needed
-        JAVA_HOME = tool 'JDK17'  // Make sure to configure this in Jenkins
+        // Set GRADLE_USER_HOME to a directory where Jenkins has write permissions
+        GRADLE_USER_HOME = "${env.WORKSPACE}/.gradle"
+        JAVA_HOME = tool 'JDK17'
     }
 
     stages {
@@ -14,19 +15,32 @@ pipeline {
             }
         }
         
+        stage('Setup') {
+            steps {
+                // Create Gradle user home directory
+                script {
+                    if (isUnix()) {
+                        sh 'mkdir -p ${GRADLE_USER_HOME}'
+                    } else {
+                        bat 'if not exist "%GRADLE_USER_HOME%" mkdir "%GRADLE_USER_HOME%"'
+                    }
+                }
+            }
+        }
+
         stage('Build') {
             steps {
-                // Run Gradle build using the wrapper
+                // Run Gradle build with specific user home
                 script {
                     try {
                         if (isUnix()) {
-                            sh './gradlew clean build --no-daemon'
+                            sh './gradlew clean build --no-daemon --gradle-user-home "${GRADLE_USER_HOME}"'
                         } else {
-                            bat 'gradlew.bat clean build --no-daemon'
+                            bat 'gradlew.bat clean build --no-daemon --gradle-user-home "%GRADLE_USER_HOME%"'
                         }
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
-                        error('Build failed: ' + e.message)
+                        error("Build failed: ${e.message}")
                     }
                 }
             }
@@ -38,13 +52,13 @@ pipeline {
                 script {
                     try {
                         if (isUnix()) {
-                            sh './gradlew test --no-daemon'
+                            sh './gradlew test --no-daemon --gradle-user-home "${GRADLE_USER_HOME}"'
                         } else {
-                            bat 'gradlew.bat test --no-daemon'
+                            bat 'gradlew.bat test --no-daemon --gradle-user-home "%GRADLE_USER_HOME%"'
                         }
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
-                        error('Tests failed: ' + e.message)
+                        error("Tests failed: ${e.message}")
                     }
                 }
             }
@@ -64,7 +78,7 @@ pipeline {
             echo 'Build and Tests passed successfully!'
         }
         failure {
-            echo 'Build failed. Please check the logs.'
+            echo 'Build or Tests failed. Please check the logs.'
         }
         always {
             // Clean up workspace
