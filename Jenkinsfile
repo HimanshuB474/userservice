@@ -17,10 +17,10 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh 'chmod +x gradlew'
-                        sh 'mkdir -p ${GRADLE_USER_HOME}'
+                        sh 'mkdir -p ${GRADLE_USER_HOME}/wrapper/dists'
                     } else {
                         bat 'icacls gradlew.bat /grant Everyone:F'
-                        bat 'mkdir "%GRADLE_USER_HOME%"'
+                        bat 'mkdir "%GRADLE_USER_HOME%\\wrapper\\dists"'
                     }
                 }
             }
