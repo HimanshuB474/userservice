@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Set GRADLE_USER_HOME to workspace-specific directory
         GRADLE_USER_HOME = "${WORKSPACE}/.gradle"
-        JAVA_HOME = tool 'JDK17'
+        JAVA_HOME = tool 'JDK-17'
     }
 
     stages {
