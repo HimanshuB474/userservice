@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         // Use a simple, safe path for Gradle user home
-        GRADLE_USER_HOME = "${WORKSPACE}\\gradle_home"
+        GRADLE_USER_HOME = "${WORKSPACE}/gradle_home"
         JAVA_HOME = tool 'JDK-17'
     }
 
