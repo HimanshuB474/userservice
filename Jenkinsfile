@@ -9,11 +9,7 @@ pipeline {
         stage('Set Gradle User Home') {
             steps {
                 script {
-                    if (isUnix()) {
-                        env.GRADLE_USER_HOME = "${env.WORKSPACE}/gradle_home"
-                    } else {
-                        env.GRADLE_USER_HOME = "${env.WORKSPACE}\gradle_home"
-                    }
+                    env.GRADLE_USER_HOME = "${env.WORKSPACE}/gradle_home"
                 }
             }
         }
