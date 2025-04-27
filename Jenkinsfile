@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        // use forward-slashes even on Windows
         GRADLE_USER_HOME = "${WORKSPACE}/gradle_home"
     }
 
@@ -12,13 +13,14 @@ pipeline {
             }
         }
 
-        stage('Setup Permissions and Prepare') {
+        stage('Setup Permissions & Prepare') {
             steps {
                 script {
                     if (isUnix()) {
                         sh 'chmod +x gradlew'
                         sh 'mkdir -p ${GRADLE_USER_HOME}/wrapper/dists'
                     } else {
+                        // grant exec, then create nested dirs in one go
                         bat 'icacls gradlew.bat /grant Everyone:F'
                         bat 'mkdir "%GRADLE_USER_HOME%\\wrapper\\dists"'
                     }
@@ -26,7 +28,7 @@ pipeline {
             }
         }
 
-        stage('Build and Test') {
+        stage('Build & Test') {
             steps {
                 script {
                     if (isUnix()) {
@@ -43,20 +45,14 @@ pipeline {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
-                echo '🚀 Deployment placeholder (add your deploy steps here)'
+                echo '🚀 Deployment placeholder (add your real deploy steps here)'
             }
         }
     }
 
     post {
-        always {
-            cleanWs()
-        }
-        failure {
-            echo '❌ Build or Tests failed. Please check the logs.'
-        }
-        success {
-            echo '🎉 Build and Tests completed successfully!'
-        }
+        always { cleanWs() }
+        failure { echo '❌ Build or Tests failed. Please check the logs.' }
+        success { echo '🎉 Build and Tests completed successfully!' }
     }
 }
