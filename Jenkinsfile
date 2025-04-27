@@ -12,78 +12,29 @@ pipeline {
             }
         }
 
-        stage('Set Gradle User Home') {
+        stage('Setup Permissions') {
             steps {
                 script {
                     if (isUnix()) {
-                        sh '''
-                            mkdir -p gradle_home/wrapper/dists
-                        '''
+                        sh 'chmod +x gradlew'
                     } else {
-                        bat '''
-                            mkdir gradle_home 2>nul
-                            mkdir gradle_home\\wrapper 2>nul
-                            mkdir gradle_home\\wrapper\\dists 2>nul
-                        '''
+                        bat 'icacls gradlew.bat /grant Everyone:F'
                     }
                 }
             }
         }
 
-        stage('Setup') {
+        stage('Build and Test') {
             steps {
                 script {
                     if (isUnix()) {
                         sh '''
-                            chmod +x gradlew
+                            ./gradlew clean build test --no-daemon --gradle-user-home=${GRADLE_USER_HOME}
                         '''
                     } else {
-                        bat '''
-                            icacls gradlew.bat /grant Everyone:F
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('Build') {
-            steps {
-                script {
-                    try {
-                        if (isUnix()) {
-                            sh '''
-                                ./gradlew wrapper --gradle-user-home=${GRADLE_USER_HOME}
-                                ./gradlew clean build --no-daemon --gradle-user-home=${GRADLE_USER_HOME} --info
-                            '''
-                        } else {
-                            bat '''
-                                gradlew.bat wrapper --gradle-user-home=%GRADLE_USER_HOME%
-                                gradlew.bat clean build --no-daemon --gradle-user-home=%GRADLE_USER_HOME% --info
-                            '''
-                        }
-                    } catch (Exception e) {
-                        currentBuild.result = 'FAILURE'
-                        error("❌ Build failed: ${e.message}")
-                    }
-                }
-            }
-        }
-
-        stage('Test') {
-            when {
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
-            }
-            steps {
-                script {
-                    echo '✅ Running Tests...'
-                    if (isUnix()) {
-                        sh '''
-                            ./gradlew test --no-daemon --gradle-user-home=${GRADLE_USER_HOME}
-                        '''
-                    } else {
-                        bat '''
-                            gradlew.bat test --no-daemon --gradle-user-home=%GRADLE_USER_HOME%
-                        '''
+                        bat """
+                            gradlew.bat clean build test --no-daemon --gradle-user-home=%GRADLE_USER_HOME%
+                        """
                     }
                 }
             }
@@ -95,7 +46,7 @@ pipeline {
             }
             steps {
                 echo '🚀 Deployment stage (placeholder)'
-                // Add deployment steps here
+                // add your deploy commands here
             }
         }
     }
