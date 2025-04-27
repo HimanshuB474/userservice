@@ -39,9 +39,9 @@ pipeline {
                 script {
                     try {
                         if (isUnix()) {
-                            sh './gradlew clean build --no-daemon --gradle-user-home="${GRADLE_USER_HOME}" --info'
+                            sh './gradlew clean build --no-daemon --gradle-user-home=${GRADLE_USER_HOME} --info'
                         } else {
-                            bat 'gradlew.bat clean build --no-daemon --gradle-user-home="%GRADLE_USER_HOME%" --info'
+                            bat 'gradlew.bat clean build --no-daemon --gradle-user-home=%GRADLE_USER_HOME% --info'
                         }
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
@@ -56,9 +56,9 @@ pipeline {
                 script {
                     try {
                         if (isUnix()) {
-                            sh './gradlew test --no-daemon --gradle-user-home="${GRADLE_USER_HOME}" --info'
+                            sh './gradlew test --no-daemon --gradle-user-home=${GRADLE_USER_HOME} --info'
                         } else {
-                            bat 'gradlew.bat test --no-daemon --gradle-user-home="%GRADLE_USER_HOME%" --info'
+                            bat 'gradlew.bat test --no-daemon --gradle-user-home=%GRADLE_USER_HOME% --info'
                         }
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
