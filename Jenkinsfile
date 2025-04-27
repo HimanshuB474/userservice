@@ -2,27 +2,34 @@ pipeline {
     agent any
     
     environment {
-        // Set GRADLE_USER_HOME to a directory where Jenkins has write permissions
-        GRADLE_USER_HOME = "${env.WORKSPACE}/.gradle"
+        // Set GRADLE_USER_HOME to workspace-specific directory
+        GRADLE_USER_HOME = "${WORKSPACE}/.gradle"
         JAVA_HOME = tool 'JDK17'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the latest code from the Git repository
                 checkout scm
             }
         }
         
         stage('Setup') {
             steps {
-                // Create Gradle user home directory
                 script {
+                    // Create Gradle directories and set permissions
                     if (isUnix()) {
-                        sh 'mkdir -p ${GRADLE_USER_HOME}'
+                        sh '''
+                            chmod +x gradlew
+                            mkdir -p .gradle
+                            chmod -R 777 .gradle
+                        '''
                     } else {
-                        bat 'if not exist "%GRADLE_USER_HOME%" mkdir "%GRADLE_USER_HOME%"'
+                        bat '''
+                            mkdir .gradle 2>nul
+                            icacls .gradle /grant Everyone:(OI)(CI)F /T
+                            icacls gradlew.bat /grant Everyone:F
+                        '''
                     }
                 }
             }
@@ -30,13 +37,22 @@ pipeline {
 
         stage('Build') {
             steps {
-                // Run Gradle build with specific user home
                 script {
                     try {
                         if (isUnix()) {
-                            sh './gradlew clean build --no-daemon --gradle-user-home "${GRADLE_USER_HOME}"'
+                            sh """
+                                ./gradlew clean build \
+                                    --no-daemon \
+                                    --gradle-user-home '${WORKSPACE}/.gradle' \
+                                    --info
+                            """
                         } else {
-                            bat 'gradlew.bat clean build --no-daemon --gradle-user-home "%GRADLE_USER_HOME%"'
+                            bat """
+                                gradlew.bat clean build ^
+                                    --no-daemon ^
+                                    --gradle-user-home "%WORKSPACE%\\.gradle" ^
+                                    --info
+                            """
                         }
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
@@ -48,13 +64,22 @@ pipeline {
 
         stage('Test') {
             steps {
-                // Run unit tests using the wrapper
                 script {
                     try {
                         if (isUnix()) {
-                            sh './gradlew test --no-daemon --gradle-user-home "${GRADLE_USER_HOME}"'
+                            sh """
+                                ./gradlew test \
+                                    --no-daemon \
+                                    --gradle-user-home '${WORKSPACE}/.gradle' \
+                                    --info
+                            """
                         } else {
-                            bat 'gradlew.bat test --no-daemon --gradle-user-home "%GRADLE_USER_HOME%"'
+                            bat """
+                                gradlew.bat test ^
+                                    --no-daemon ^
+                                    --gradle-user-home "%WORKSPACE%\\.gradle" ^
+                                    --info
+                            """
                         }
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
