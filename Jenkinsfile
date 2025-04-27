@@ -2,12 +2,22 @@ pipeline {
     agent any
     
     environment {
-        // Use a simple, safe path for Gradle user home
-        GRADLE_USER_HOME = "${WORKSPACE}/gradle_home"
         JAVA_HOME = tool 'JDK-17'
     }
 
     stages {
+        stage('Set Gradle User Home') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        env.GRADLE_USER_HOME = "${env.WORKSPACE}/gradle_home"
+                    } else {
+                        env.GRADLE_USER_HOME = "${env.WORKSPACE}\gradle_home"
+                    }
+                }
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout scm
