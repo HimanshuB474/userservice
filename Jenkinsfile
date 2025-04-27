@@ -9,7 +9,7 @@ pipeline {
         stage('Set Gradle User Home') {
             steps {
                 script {
-                    env.GRADLE_USER_HOME = "${env.WORKSPACE}/gradle_home"
+                    env.GRADLE_USER_HOME = "${env.WORKSPACE}/gradle_home".replaceAll(/[\\/]+$/, '')
                 }
             }
         }
