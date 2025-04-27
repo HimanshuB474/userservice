@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        GRADLE_USER_HOME = "${WORKSPACE}/gradle_home"
+        GRADLE_USER_HOME = "${WORKSPACE}\\gradle_home"
     }
 
     stages {
@@ -45,8 +45,8 @@ pipeline {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
-                echo '🚀 Deployment stage (placeholder)'
-                // add your deploy commands here
+                echo '🚀 Deployment placeholder'
+                // your deploy commands here
             }
         }
     }
